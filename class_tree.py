@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Self, Union
 import random
 
 rootType = Callable[[str,str], float]
@@ -15,7 +15,7 @@ class SimTree():
         self.isNode = lambda x: True if(len(x.child) == 1) else False
         self.isLeaf = lambda x: True if(len(x.child) == 0) else False
         
-    def __str__(self):
+    def __str__(self) -> str:
         if self.isRoot(self): #root 
             tree_list = str([self.value.__name__,
                          self.child[0].__str__(),
@@ -25,8 +25,18 @@ class SimTree():
         else: #leaf
             tree_list = self.value
         return tree_list  
+
+    def __eq__(self, other : Self) -> bool:
+        if self.isRoot(self) and other.isRoot(other):
+            return ((self.child[0].get_depth() == other.child[0].get_depth()) and 
+                    (self.child[1].get_depth() == other.child[1].get_depth())
+                    ) and (self.value == other.value) and (self.child[0].__eq__(other.child[0]))
+        elif self.isNode(self) and other.isNode(other):
+            return (self.value == other.value) and self.child[0].__eq__(other.child[0])
+        else: 
+            return True
           
-    def return_tree_asList(self):
+    def return_tree_asList(self) -> list[Union[leafType, nodeType, rootType]]:
         if self.isRoot(self): #root 
             tree_list = [self.value,
                          self.child[0].return_tree_asList(),
@@ -37,39 +47,31 @@ class SimTree():
             tree_list = self.value 
         return tree_list
       
-    def compute(self):
+    def compute(self) -> float:
         if self.isRoot(self): #root
-            return self.value(self.child[0].compute(),
-                              self.child[1].compute())
+            similarity = self.value(self.child[0].compute(),self.child[1].compute())
+            return similarity
         elif self.isNode(self): #nodes
             return self.value(self.child[0].compute())
         else: #leaf
             return self.value
-    
-    def mutate(self, get_rd_function, probability : float):
-        if not self.isLeaf(self):
-            if random.random() < probability:
-                self.value = get_rd_function(len(self.child),self.value)
-            else:
-                for c in self.child:
-                    c.mutate(get_rd_function,probability)
 
-    def set_leaf_value(self,value):
+    def set_leaf_value(self,value : str) -> None:
         if self.isNode(self):
             self.child[0].set_leaf_value(value)
         if self.isLeaf(self):
             self.value = value
 
-    def set_leafs_value(self,values):
+    def set_leafs_value(self,values : list[str]) -> None:
         x,y = values
         self.child[0].set_leaf_value(x)
         self.child[1].set_leaf_value(y)
 
-    def get_Similarity_function(self):
+    def get_Similarity_function(self) -> rootType:
         if self.isRoot(self): #root
             return self.value
         
-    def get_transformations_functions(self):
+    def get_transformations_functions(self) -> list[nodeType]:
         flatten = lambda l : [item for sublist in l for item in sublist]
         if self.isRoot(self) == 2: #root
             return flatten([self.child[0].get_transformations_functions,
@@ -78,7 +80,7 @@ class SimTree():
         elif self.isNode(self) == 1: #nodes
             return self.value
 
-    def find_depth(self,x):
+    def find_depth(self,x : int) -> int:
         x+=1
         if self.isRoot(self):
             return max(self.child[0].find_depth(x), self.child[1].find_depth(x))
@@ -87,7 +89,7 @@ class SimTree():
         if self.isLeaf(self):
             return x    
 
-    def get_depth(self):
+    def get_depth(self) -> int:
         return self.find_depth(0)    
 
 
