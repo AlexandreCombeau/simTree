@@ -1,12 +1,12 @@
 import random
 import numpy as np 
-from functools import reduce 
-import typing
+import tools
 from copy import deepcopy
 import matplotlib.pyplot as plt
-from class_tree import *
-from similarity import *
-from transformation import *
+from simTree import SimTree,rootType,nodeType
+from similarity import similarity_functions
+from transformation import transformation_functions
+
            
 flatten = lambda l : [item for sublist in l for item in sublist]
 def get_rd_function(nb_child,value):
@@ -21,7 +21,6 @@ def get_rd_function(nb_child,value):
             flag = False
     return new_value
 
-
 class SimGen():
     def __init__(self, param_algo : dict , param_data : dict):
         #main param
@@ -29,7 +28,7 @@ class SimGen():
         self.nb_generation   : int = param_algo["nb_generation"]
         self.threshold       : float = param_algo["threshold"]
         #candidate param
-        self.tree_max_depth  : int = param_data["tree_max_depth"]
+        self.tree_max_depth  : int = param_algo["tree_max_depth"]
         #evolution param
         self.proba_selection : float = param_algo["proba_selection"]
         self.proba_mutation  : float = param_algo["proba_mutation"]
@@ -44,7 +43,6 @@ class SimGen():
         ) #fill the population with random trees
 
         #init param
-        #TODO implement diff types of population in evolution
         self.population : list[SimTree] = [] #current population
         self.population_candidate : list[SimTree] = [] #candidate population from which we will create the next population
         self.population_scores : list[int] = [0]*self.population_size #every candidate has a score computed at the end of an generation
@@ -54,13 +52,16 @@ class SimGen():
 
         #values param
         self.values : list[tuple[str,str]] = param_data["values"] #[(x1,y1),(x2,y2)...,(xn,yn)] such as (ei,p,xi) <=> (e'i,p',yi)
-
+        self.negatives_samples : list[tuple[str,str]] = param_data['negatives_values']
+        
         #meta param
         self.size_regularisation  = param_algo["size_regularisation"]
+        self.negative_regularisation  = param_algo["negative_sampling_regularisation"]
         self.gen_scores = []
         self.gen_top_k_scores = []
         self.top_k = param_algo["top_k"]
-
+        self.freq_tf = []
+        self.freq_sf = []
         self.size_tracker = []
         
     def generate_random_tree(self):
@@ -79,7 +80,7 @@ class SimGen():
                 return [lst[0], nest_list(lst[1:])]
 
         tree_list = [sf,nest_list(tf_left),nest_list(tf_right)]
-        tree = tree_from_list(tree_list)
+        tree = tools.tree_from_list(tree_list)
         return tree
 
     def init_population(self):
@@ -91,55 +92,52 @@ class SimGen():
         for _ in range(self.population_size):
             self.population.append(self.generate_random_tree())
     
-    #TODO add regularisation parameter
-    def fitness_over_population(self):
-        '''
-            Compute the score of a tree on every value pair
-            Keep the mean as a score
-        '''    
-         
-        for index,candidate in enumerate(self.population):
-            sim_score = 0
-            for values in self.values:
-                #compute score for each value pair for one tree
-                candidate.set_leafs_value(values)
-                score = candidate.compute()
-                sim_score += score
-            sim_score /= len(self.values)
-            #depth scoring
-            min_depth = 3
-            depth_score = (self.tree_max_depth - min_depth)/self.population[index].get_depth()
-            
-            self.population_scores[index] = sim_score - (self.size_regularisation*depth_score)
-            self.population_similarity[index] = sim_score
-            
-            if self.population_scores[index] > 1:
-                self.population_scores[index] = 1
-            if self.population_scores[index] < 0:
-                self.population_scores[index] = 0                                 
    
-    def fitness_candidate(self,candidate : SimTree) -> int:
+    def fitness_candidate(self,candidate : SimTree) -> tuple[float,float]:
         sim_score = 0
         for values in self.values:
             #compute score for each value pair for one tree
             candidate.set_leafs_value(values)
             sim_score += candidate.compute()
-            
-        #TODO maybe use other metrics
         sim_score /= len(self.values)
+
+
+        negative_sim_score = 0
+        if self.negatives_samples:
+            for negatives_values in self.negatives_samples:
+                candidate.set_leafs_value(negatives_values)
+                negative_sim_score += candidate.compute()
+            negative_sim_score /= len(self.negatives_samples)
+
+        #TODO maybe use other metrics
         #depth scoring
         min_depth = 3
-        depth_score = (self.tree_max_depth - min_depth)/candidate.get_depth()
-        fitness_score = sim_score - (self.size_regularisation*depth_score)
-        return fitness_score
-       
+        #depth_score = (self.tree_max_depth - min_depth)/candidate.get_depth()
+        depth_score = (candidate.get_depth() - min_depth)/(self.tree_max_depth - min_depth)
+        fitness_score = sim_score - ((self.size_regularisation*depth_score) + (self.negative_regularisation*negative_sim_score))
+
+        return fitness_score, sim_score
+
+    
+    #TODO add regularisation parameter
+    def fitness_over_population(self) -> None:
+        '''
+            Compute the score of a tree on every value pair
+            Keep the mean as a score
+        '''    
+        for index,candidate in enumerate(self.population):
+            fitness,similarity = self.fitness_candidate(candidate)
+            self.population_scores[index] = fitness
+            self.population_similarity[index] = similarity
+                                    
+
     def tournament_selection(self):
         while len(self.population_candidate) < self.selection_population_size:
-            c1,c2 = np.random.choice(self.population,2,replace=False)
-            if self.fitness_candidate(c1) > self.fitness_candidate(c2):
-                self.population_candidate.append(deepcopy(c1))
+            index_candidate1, index_candidate2 = np.random.choice(np.arange(0,len(self.population)),2,replace=False)
+            if self.population_scores[index_candidate1] > self.population_scores[index_candidate2]:
+                self.population_candidate.append(deepcopy(self.population[index_candidate1]))
             else:
-                self.population_candidate.append(deepcopy(c2))
+                self.population_candidate.append(deepcopy(self.population[index_candidate2]))
 
     #TODO add loger to track evolution change
     def mutation(self):
@@ -250,29 +248,41 @@ class SimGen():
         random_trees = []
         while len(random_trees) < self.random_tree_population_size:
             random_trees.append(self.generate_random_tree())      
-
         self.population_candidate = np.append(self.population_candidate,random_trees)
-           
-    def save_state(self):
-        pass
-
-    def load_state(self):
-        pass
-
+        
     def stats(self):
         self.gen_scores.append(deepcopy(self.population_similarity))
         self.gen_top_k_scores.append(deepcopy(sorted(self.population_similarity,reverse=True)[:self.top_k]))
         self.size_tracker.append([t.get_depth() for t in self.population])
 
-    def evolve_population(self, load= False):
+        #sim and trans functions frequency and evolution tracker, we want to analyse the distribution of functions choice over generations
+        freq_trans = {}
+        freq_sim   = {}
+        for f in transformation_functions():
+            freq_trans[f.__name__] = 0 
+
+        for s in similarity_functions():
+            freq_sim[s.__name__] = 0
+
+        for tree in self.population:
+            left, right = tree.get_transformations_functions()
+            for f in left+right:
+                freq_trans[f.__name__] +=1
+            freq_sim[tree.get_similarity_function().__name__] +=1
+            
+        self.freq_sf.append(freq_sim)
+        self.freq_tf.append(freq_trans)
+
+    #TODO
+    def log(self):
+        pass
+
+    def evolve_population(self):
         #compute score for each tree
         self.init_population()
-        if load:
-            self.load_state()
         for _ in range(self.nb_generation):
             if max(self.population_similarity) > self.threshold:
                 break
-            self.save_state()
             self.fitness_over_population()
             self.tournament_selection()
             self.crossover()
@@ -287,22 +297,3 @@ class SimGen():
         self.fitness_over_population()
         self.stats()     
 
-
-
-    #TODO add log to show trace of evolution for candidates
-    #TODO add meta analyse de la taille des arbres et des types de fonctions utilisées
-    #TODO table de hachage pour avoir la trace de chaque arbre ID unique pour l'historique des transformations
-
-def plot_stats_sim(sim : SimGen, save = "") -> None:
-    _fig = plt.figure(figsize=(15,5))
-    plt.subplot(1,2,1)
-    pop_scores  = [np.mean(x) for x in sim.gen_scores]
-    plt.plot(np.arange(0,len(pop_scores),1),pop_scores)
-
-    top_k_scores  = [np.mean(x) for x in sim.gen_top_k_scores]
-    plt.plot(np.arange(0,len(top_k_scores),1),top_k_scores)
-    plt.subplot(1,2,2)
-    size_avg  = [np.mean(x) for x in sim.size_tracker]
-    plt.plot(np.arange(0,len(size_avg),1),size_avg)
-    if save:
-        plt.savefig(save)

@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Callable
 from sklearn.metrics.pairwise import cosine_similarity, euclidean_distances
 from sklearn.feature_extraction.text import TfidfVectorizer
 import jellyfish
@@ -82,3 +83,9 @@ def similarity_functions() -> list:
         damerau_levenshtein_dist_similarity,
         jaro_similarity,
         ]
+
+def get_sf_function_from_name(name : str) -> Callable[[str,str],float]:
+    name_to_sim_function = {}
+    for f in similarity_functions():
+        name_to_sim_function[f.__name__] = f
+    return name_to_sim_function[name]

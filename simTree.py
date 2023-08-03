@@ -1,13 +1,15 @@
 from typing import Callable, Self, Union
-import random
 
 rootType = Callable[[str,str], float]
 nodeType = Callable[[str], str]
 leafType = str
 
-
+#TODO 
 class SimTree():
 
+    @property
+    def toto(self):
+        return lambda x: True if(len(x.child) == 2) else False
     def __init__(self, value : leafType | nodeType | rootType = None, child : list = None):
         self.value = value 
         self.child = child or []
@@ -67,18 +69,21 @@ class SimTree():
         self.child[0].set_leaf_value(x)
         self.child[1].set_leaf_value(y)
 
-    def get_Similarity_function(self) -> rootType:
+    def get_similarity_function(self) -> rootType:
         if self.isRoot(self): #root
             return self.value
         
     def get_transformations_functions(self) -> list[nodeType]:
-        flatten = lambda l : [item for sublist in l for item in sublist]
-        if self.isRoot(self) == 2: #root
-            return flatten([self.child[0].get_transformations_functions,
-                            self.child[1].get_transformations_functions])
+        if self.isRoot(self): #root
+            return [self.child[0].get_transformations_functions(),
+                self.child[1].get_transformations_functions()]
+   
 
-        elif self.isNode(self) == 1: #nodes
-            return self.value
+        elif self.isNode(self): #nodes
+            if self.isNode(self.child[0]):
+                return [self.value]+self.child[0].get_transformations_functions()
+            else:
+                return [self.value]
 
     def find_depth(self,x : int) -> int:
         x+=1
@@ -93,18 +98,3 @@ class SimTree():
         return self.find_depth(0)    
 
 
-def tree_from_list(tree_list : list) -> SimTree:
-    if len(tree_list) == 3: #root
-        value = tree_list[0]
-        left_child = tree_list[1]
-        right_child = tree_list[2]
-        return SimTree(value,
-                [tree_from_list(left_child),
-                tree_from_list(right_child)])
-    elif len(tree_list) == 2: #nodes        
-        value = tree_list[0]
-        child = tree_list[1]
-        return SimTree(value,[tree_from_list(child)])
-    else: #leaf
-        value = tree_list[0]
-        return SimTree(value,[])
