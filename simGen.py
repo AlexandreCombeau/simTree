@@ -1,8 +1,8 @@
 import random
 import numpy as np 
 import tools
+import logging
 from copy import deepcopy
-import matplotlib.pyplot as plt
 from simTree import SimTree,rootType,nodeType
 from similarity import similarity_functions
 from transformation import transformation_functions
@@ -63,6 +63,10 @@ class SimGen():
         self.freq_tf = []
         self.freq_sf = []
         self.size_tracker = []
+
+        #logging param
+        self.param_algo = param_algo
+        self.param_data = param_data
         
     def generate_random_tree(self):
         nb_transformation = random.randint(1,self.tree_max_depth - 2)
@@ -119,7 +123,6 @@ class SimGen():
         return fitness_score, sim_score
 
     
-    #TODO add regularisation parameter
     def fitness_over_population(self) -> None:
         '''
             Compute the score of a tree on every value pair
@@ -139,7 +142,6 @@ class SimGen():
             else:
                 self.population_candidate.append(deepcopy(self.population[index_candidate2]))
 
-    #TODO add loger to track evolution change
     def mutation(self):
         mutation_candidate = []
         while len(mutation_candidate) < self.mutation_population_size:
@@ -273,9 +275,12 @@ class SimGen():
         self.freq_sf.append(freq_sim)
         self.freq_tf.append(freq_trans)
 
-    #TODO
+    
     def log(self):
-        pass
+        logging.debug(f"Parameters used : \n\t{self.param_algo} \n\t")
+        best_sim_tree = max(self.gen_top_k_scores[-1])
+        best_score_tree = max(self.gen_scores[-1])
+        logging.debug(f"Best similarity tree : {best_sim_tree} \n Best scoring tree : {best_score_tree}")
 
     def evolve_population(self):
         #compute score for each tree
@@ -295,5 +300,6 @@ class SimGen():
  
 
         self.fitness_over_population()
-        self.stats()     
+        self.stats()   
+        self.log()  
 

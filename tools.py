@@ -207,8 +207,8 @@ def get_best_tree(sim : SimGen) -> list[SimTree]:
     return [sim.population[i] for i in index_score[0:5]]
 
 
-
-def test_solution(sim_trees : list[SimTree], dataset : list[list[tuple[str,str]]], train_index : tuple[list[int],list[int]], threshold : float, verbose : bool = False) -> list[float]:
+#train_index : tuple[list[int],list[int]]
+def test_solution(sim_trees : list[SimTree], dataset : list[list[tuple[str,str]]], threshold : float, verbose : bool = False) -> list[float]:
     
     d1,d2 = dataset
     tp = 0

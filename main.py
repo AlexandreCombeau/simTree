@@ -5,6 +5,9 @@ from transformation import *
 from copy import deepcopy
 import tools
 import simGen
+import log
+import logging
+
 #TODO extract param to name img
 def genetic_algo(dataset : list[tuple[str,str]], nb_positives : int, negative_sampling : bool = False, param_algo : dict = None, plot_img_path : str = ""):
     index_positives = np.random.choice(np.arange(0,len(dataset)),nb_positives)
@@ -35,14 +38,15 @@ def genetic_algo(dataset : list[tuple[str,str]], nb_positives : int, negative_sa
     #need to generate negative sampling
     if negative_sampling:
         nb_negative_example = 50
-        negative_param_algo = deepcopy(param_algo)
-        negative_param_algo["nb_generation"] = 5
-        neg_sim = simGen.SimGen(negative_param_algo,param_data)
+        param_algo["nb_generation"] = 5 #few generation to find an aproxima solution for the best sim function 
+        neg_sim = simGen.SimGen(param_algo,param_data)
         neg_sim.evolve_population()
         supposed_best_sim_function = get_tf_function_from_name(max(neg_sim.freq_tf[-1])) #get most frequent sim function for the last generation
         negatives = tools.generate_NegativeSample(list(map(lambda x: [x] ,dataset)),supposed_best_sim_function)
         negative_dataset = np.array(negatives)[np.random.choice(np.arange(0,len(negatives)),nb_negative_example)].tolist()
-        param_data["negatives_values"] = negative_dataset        
+        param_data["negatives_values"] = negative_dataset      
+        param_algo["nb_generation"] = 30
+        
 
     sim = simGen.SimGen(param_algo,param_data)
     sim.evolve_population()
@@ -57,16 +61,25 @@ def genetic_algo(dataset : list[tuple[str,str]], nb_positives : int, negative_sa
 
 
 def main():
+    log.init()
+
+    
     N = 1000
-    isbn_dataset = tools.generate_dataset(db_prop="isbn",wk_prop="P957",size=N)
+    db_prop = "isbn"
+    wk_prop = "P957"
+    isbn_dataset = tools.generate_dataset(db_prop=db_prop,wk_prop=wk_prop,size=N)
+    logging.debug(f"Start Genetic algo (db-wk) : {db_prop} - {wk_prop}")
     sim_isbn, best_trees_isbn, index_positives_isbn = genetic_algo(isbn_dataset,100, True, "img/isbn/100pop")
 
+    db_prop = "releaseDate"
+    wk_prop = "P577"
     release_dataset = tools.generate_dataset(db_prop="releaseDate",wk_prop="P577",size=N)
-    sim_releaseDate, best_trees_releaseDate, index_positives_releaseDate = genetic_algo(release_dataset,100,50,"img/release_date/100pop")
+    logging.debug(f"Start Genetic algo (db-wk) : {db_prop} - {wk_prop}")
+    sim_releaseDate, best_trees_releaseDate, index_positives_releaseDate = genetic_algo(release_dataset,100, True,"img/release_date/100pop")
     #remove index_positives element from the dataset
     #need to be the same (maybe take the same seed)
     acc,recall = tools.test_solution(sim_trees=[best_trees_isbn[0],best_trees_releaseDate[0]],dataset=[isbn_dataset,release_dataset],threshold=0.7)
-    print(f"accuracy = {acc}, recall = {recall}")
+    logging.debug(f"For couple [isbn-releaseDate] genetic generated tree results : accuracy = {acc}, recall = {recall}")
 
 
 main()
