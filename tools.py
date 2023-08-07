@@ -2,13 +2,13 @@ import numpy as np
 import json
 import os
 import random
+import logging
 from simTree import SimTree
 import matplotlib.pyplot as plt
 from typing import Callable
-from transformation import transformation_functions
-from similarity import similarity_functions
+from transformation import transformation_functions, get_tf_function_from_name
+from similarity import similarity_functions, get_sf_function_from_name
 from simGen import SimGen
-
 
 #####################################
 ############ JSON methods ###########
@@ -29,6 +29,7 @@ def get_dict_from_json_file(json_file : str) -> dict:
         d = json.load(f)
         return d
 
+
 #####################################
 ########## SimTree methods ##########
 ##################################### 
@@ -48,6 +49,40 @@ def tree_from_list(tree_list : list) -> SimTree:
     else: #leaf
         value = tree_list[0]
         return SimTree(value,[])
+
+
+
+def tree_from_str_list(tree_list : list) -> SimTree:
+    if len(tree_list) == 3: #root
+        value = get_sf_function_from_name(tree_list[0])
+        left_child = tree_list[1]
+        right_child = tree_list[2]
+        return SimTree(value,
+                [tree_from_str_list(left_child),
+                tree_from_str_list(right_child)])
+    elif len(tree_list) == 2: #nodes        
+        value = get_tf_function_from_name(tree_list[0])
+        child = tree_list[1]
+        return SimTree(value,[tree_from_str_list(child)])
+    else: #leaf
+        value = tree_list[0]
+        return SimTree(value,[])
+
+def trees_from_file(tree_file : str) -> list[SimTree]:
+    """From a file containing a list of tree as lists we convert and evaluate them back to objects. One line per tree
+
+    Args:
+        tree_file (str): path to file containing trees
+
+    Returns:
+        list[SimTree]: the list of trees contained in the file
+    """
+    trees : list[SimTree] = []
+    with open(tree_file, 'r',encoding="UFT-8") as f:
+        for line in f.read().split("\n"):
+            trees.append(tree_from_str_list(eval(line)))
+    return trees
+
 
 #####################################
 ########## Dataset methods ##########
@@ -86,14 +121,17 @@ def generate_dataset(db_prop : str, wk_prop : str, size : int, folder_path : str
         index_count += 1
     return result_mapping
 
-#TODO need more testing for multivalued keys
-def generate_NegativeSample(dataset : list[list[tuple[str,str]]], sim_function : Callable[[str,str], float]) -> list[list[tuple[str,str]]]:
+def generate_NegativeSample(dataset : list[list[tuple[str,str]]], sim_functions : list[Callable[[str,str], float]], size : int) -> list[list[tuple[str,str]]] | list[tuple[str,str]]:
     threshold = 0.7
     threshold_max_min = 0.3
     
-    def compare_keys(key1 : list[tuple[str,str]],key2 : list[tuple[str,str]], sim_function : Callable[[str,str], float]) -> tuple[str,str] | None:
+    def compare_keys(key1 : list[tuple[str,str]],key2 : list[tuple[str,str]], sim_functions : list[Callable[[str,str], float]]) -> tuple[str,str] | None:
         sim = []
-        for v,w in zip(key1,key2):
+        # print(f"key1 :{key1} \t key2 : {key2}")
+        for v,w,sim_function in zip(key1,key2,sim_functions):
+            # print(v,w,sim_function)
+            # print(f"key1:{v[0]}, key2:{w[1]}, sim {sim_function} function = {sim_function(v[0],w[1])}")
+            
             sim.append(sim_function(v[0],w[1])) #v[0] is the dbpedia value, first value of tuple, w[1] is for wikidata
         if sum(map(lambda x: x>=threshold, sim)) == len(sim)-1 and (max(sim) - min(sim)) > threshold_max_min: 
             #if all but one value are above our threshold of similarity the last should not be similar because its a key and all values cannot be the same
@@ -106,10 +144,15 @@ def generate_NegativeSample(dataset : list[list[tuple[str,str]]], sim_function :
         negativeSample = []
         key_selected = []
         for key in dataset: #looop over list of key properties values tuple
-            for key_ in dataset:
-                if key != key_ and (res := compare_keys(key,key_,sim_function)):
-                    key_selected.append(key_)
+            for index_,key_ in enumerate(dataset):
+                if key != key_ and (res := compare_keys(key,key_,sim_functions)):
+                    key_selected.append((key,key_,res[1]))
                     negativeSample.append(res)
+                    if len(negativeSample) == size:
+                        return negativeSample, key_selected
+                    # if size > len(negativeSample):
+                    #     return negativeSample
+
     
         return negativeSample,key_selected
     
@@ -122,12 +165,20 @@ def generate_NegativeSample(dataset : list[list[tuple[str,str]]], sim_function :
         res = [(db_values[i],wk_values[j]) for i,j in shifted_index]
         return res
   
+def train_test_datasets(dataset : list[tuple[str,str]], size_train : int) -> tuple[list[tuple[str,str]]]:
+    index_dataset = np.arange(0,len(dataset)-1)
+    train_index = np.random.choice(index_dataset,size_train,replace=False)
+    test_index = set(index_dataset).difference(set(train_index))
+    train_dataset = np.array(dataset)[train_index].tolist()
+    test_dataset = np.array(dataset)[test_index].tolist()
+    return train_dataset,test_dataset
+    
 
 #####################################
 ########## SimGen methods ###########
 ##################################### 
 
-def plot_stats_sim(sim : SimGen, save = "") -> None:
+def plot_stats_sim(sim : SimGen, save : str = "") -> None:
     _fig = plt.figure(figsize=(15,5))
     plt.subplot(1,2,1)
     pop_scores  = [np.mean(x) for x in sim.gen_scores]
@@ -207,18 +258,15 @@ def get_best_tree(sim : SimGen) -> list[SimTree]:
     return [sim.population[i] for i in index_score[0:5]]
 
 
-#train_index : tuple[list[int],list[int]]
-def test_solution(sim_trees : list[SimTree], dataset : list[list[tuple[str,str]]], threshold : float, verbose : bool = False) -> list[float]:
-    
-    d1,d2 = dataset
+def test_solution(sim_trees : list[SimTree], dataset : list[list[tuple[str,str]]], threshold : float) -> list[float]:
+
     tp = 0
     fp = 0
     tn = 0
     fn = 0
-
-    for index1,mapping1 in enumerate(zip(d1,d2)):
+    for index1,mapping1 in enumerate(zip(*dataset)):
         db_entity = list(map(lambda x:x[0],mapping1))
-        for index2,mapping2 in enumerate(zip(d1,d2)):
+        for index2,mapping2 in enumerate(zip(*dataset)):
             wk_entity = list(map(lambda x:x[1],mapping2))
             sim = []
             for tree,db,wk in zip(sim_trees,db_entity,wk_entity):
@@ -237,9 +285,8 @@ def test_solution(sim_trees : list[SimTree], dataset : list[list[tuple[str,str]]
 
     accuracy = tp / (tp+fn)
     recall   = tp / (tp+fp) if tp else 0
+    logging.debug(f"accuracy : {accuracy} - recall : {recall} \n true positives : {tp} - false negatives : {fn} - true negatives : {tn} - false positives : {fp}")
 
-    if verbose:
-        print(f"accuracy : {accuracy} - recall : {recall} \n true positives : {tp} - false negatives : {fn} - true negatives : {tn} - false positives : {fp}")
     return [accuracy,recall]
 
 

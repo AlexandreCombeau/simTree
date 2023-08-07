@@ -277,10 +277,10 @@ class SimGen():
 
     
     def log(self):
-        logging.debug(f"Parameters used : \n\t{self.param_algo} \n\t")
+        logging.debug(f"Parameters used : \n{self.param_algo} \n\t")
         best_sim_tree = max(self.gen_top_k_scores[-1])
         best_score_tree = max(self.gen_scores[-1])
-        logging.debug(f"Best similarity tree : {best_sim_tree} \n Best scoring tree : {best_score_tree}")
+        logging.debug(f"\n Best similarity tree :  {best_sim_tree} \t Best scoring tree : {best_score_tree}")
 
     def evolve_population(self):
         #compute score for each tree

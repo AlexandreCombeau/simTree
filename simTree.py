@@ -1,4 +1,4 @@
-from typing import Callable, Self, Union
+from typing import Callable, Union
 
 rootType = Callable[[str,str], float]
 nodeType = Callable[[str], str]
@@ -28,7 +28,7 @@ class SimTree():
             tree_list = self.value
         return tree_list  
 
-    def __eq__(self, other : Self) -> bool:
+    def __eq__(self, other) -> bool:
         if self.isRoot(self) and other.isRoot(other):
             return ((self.child[0].get_depth() == other.child[0].get_depth()) and 
                     (self.child[1].get_depth() == other.child[1].get_depth())

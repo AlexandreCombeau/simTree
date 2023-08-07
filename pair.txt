@@ -1,0 +1,3 @@
+isbn P957
+releaseDate P555
+toto P54
