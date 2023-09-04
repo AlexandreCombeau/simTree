@@ -1,4 +1,6 @@
 *.png
 *.pyc
 *.ipynb
+*.json
+data/*.json
 dataset.py
