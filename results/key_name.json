@@ -1,0 +1,1 @@
+{"best_trees": {"('isbn', 'P957')": "[<simTree.SimTree object at 0x0000015D83B77F90>, <simTree.SimTree object at 0x0000015D83B77D90>, <simTree.SimTree object at 0x0000015D83B77890>, <simTree.SimTree object at 0x0000015D83B76F50>, <simTree.SimTree object at 0x0000015D83B76350>]"}, "accuracy": 0.01557285873192436, "recall": 1.0}

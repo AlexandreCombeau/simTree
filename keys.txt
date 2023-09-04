@@ -1,2 +1,0 @@
-releaseDate P577
-isbn P957

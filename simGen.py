@@ -58,7 +58,9 @@ class SimGen():
         self.size_regularisation  = param_algo["size_regularisation"]
         self.negative_regularisation  = param_algo["negative_sampling_regularisation"]
         self.gen_scores = []
-        self.gen_top_k_scores = []
+        self.gen_sim = []
+        self.gen_top_k_sim = []
+        self.gen_top_k_score = []
         self.top_k = param_algo["top_k"]
         self.freq_tf = []
         self.freq_sf = []
@@ -253,8 +255,10 @@ class SimGen():
         self.population_candidate = np.append(self.population_candidate,random_trees)
         
     def stats(self):
-        self.gen_scores.append(deepcopy(self.population_similarity))
-        self.gen_top_k_scores.append(deepcopy(sorted(self.population_similarity,reverse=True)[:self.top_k]))
+        self.gen_sim.append(deepcopy(self.population_similarity))
+        self.gen_scores.append(deepcopy(self.population_scores))
+        self.gen_top_k_sim.append(deepcopy(sorted(self.population_similarity,reverse=True)[:self.top_k]))
+        self.gen_top_k_score.append(deepcopy(sorted(self.population_scores,reverse=True)[:self.top_k]))
         self.size_tracker.append([t.get_depth() for t in self.population])
 
         #sim and trans functions frequency and evolution tracker, we want to analyse the distribution of functions choice over generations
@@ -277,10 +281,10 @@ class SimGen():
 
     
     def log(self):
-        logging.debug(f"Parameters used : \n{self.param_algo} \n\t")
-        best_sim_tree = max(self.gen_top_k_scores[-1])
-        best_score_tree = max(self.gen_scores[-1])
-        logging.debug(f"\n Best similarity tree :  {best_sim_tree} \t Best scoring tree : {best_score_tree}")
+        logging.info(f"Parameters used : \n{self.param_algo} \n\t")
+        best_score_tree = max(self.population_scores)
+        best_sim_tree = max(self.population_similarity)
+        logging.info(f"\n Best similarity tree :  {best_sim_tree} \t Best scoring tree : {best_score_tree}")
 
     def evolve_population(self):
         #compute score for each tree
