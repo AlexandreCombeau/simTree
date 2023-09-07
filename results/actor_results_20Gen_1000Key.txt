@@ -1,0 +1,2 @@
+f-measure : 0.783989834815756 - precision : 0.9618082618862042 - recall : 0.6616621983914209 
+ true positives : 1234 - false negatives : 49 - true negatives : 1415 - false positives : 631

@@ -353,7 +353,7 @@ def name_from_uri(uri : str) -> str:
         str: _description_
     """
     if "skos" in uri:
-        return uri.split("#")[-1]
+        return "skos:"+uri.split("#")[-1]
     else:
         return uri.split("/")[-1]
 
@@ -605,7 +605,7 @@ def is_file_empty(file_path : str) -> bool:
 
 
 #get all entities with all property they support
-def get_entities_prop(sparql_graph : str) -> dict[str,list[str]]:
+def get_entities_prop(sparql_graph : str, goldstandard_file_path : str) -> dict[str,list[str]]:
     query = """
     select distinct ?e ?p where {   
         graph <"""+sparql_graph+"""> {
@@ -614,14 +614,22 @@ def get_entities_prop(sparql_graph : str) -> dict[str,list[str]]:
         }
     } 
     """
+    goldstandard_entity_mapping = set()
+    with open(goldstandard_file_path,"r", encoding="UTF-8") as f:
+        for line in f.read().split("\n"):
+            if line:
+                e1,_ = line.split("\t")
+                goldstandard_entity_mapping.add(e1)
+
     res = sparql_query(query)
     d = {}
     for line in res["results"]["bindings"]:
         entity_value = name_from_uri(line["e"]["value"])
-        prop_name = name_from_uri(line["p"]["value"])
-        if not d.get(entity_value):
-            d[entity_value] = set()
-        d[entity_value].add(prop_name)
+        if entity_value in goldstandard_entity_mapping:
+            prop_name = name_from_uri(line["p"]["value"])
+            if not d.get(entity_value):
+                d[entity_value] = set()
+            d[entity_value].add(prop_name)
     for e in d:
         d[e] = list(d[e])
     return d
@@ -665,12 +673,8 @@ def compute_similarity(entity1 : dict[str,dict[str,str]], entity2 : dict[str,dic
     similarity = 0
     for prop in key:
         tree = tree_dict[prop]
-        #check type prop, TODO maybe il faut changer
-        #v1 = get_value(entity1,prop,sparql_graph_names[0])
         v1 = entity1[prop]
-        #v2 = get_value(entity2,prop,sparql_graph_names[1])
         v2 = entity2[prop]
-        # logging.info(f"values {v1,v2} for prop {prop}")
         tree.set_leafs_value([v1,v2])
         similarity += tree.compute()
     similarity /= len(key)
@@ -719,6 +723,8 @@ def full_dataset(sparql_graph :str) -> dict[str,dict[str,str]]:
     for line in res["results"]["bindings"]:
         entity_value = name_from_uri(line["e"]['value'])
         prop_name = name_from_uri(line["p"]["value"])
+        # if "label" in prop_name:
+        #     print(prop_name)
         prop_value = line["v"]["value"]
         if entity_value not in entity_full_dataset:
             entity_full_dataset[entity_value] = {}

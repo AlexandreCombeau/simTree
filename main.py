@@ -169,8 +169,8 @@ def main():
     DATASET2_graph = "http://yago/graph"
  
 
-    key_file_path_dataset1 = "../datasets/Actor/Actor/DB_Actor copy.keys"
-    key_file_path_dataset2 = "../datasets/Actor/Actor/YAGO_Actor copy.keys"
+    key_file_path_dataset1 = "../datasets/Actor/Actor/DB_Actor.keys"
+    key_file_path_dataset2 = "../datasets/Actor/Actor/YAGO_Actor.keys"
     # output_data_folder_path = sys.argv[3]
     root_folder_path = "../datasets/Actor/Actor/" 
     goldstandard_file_path = "../datasets/Actor/Actor/Actor.Goldstandard.txt" 
@@ -189,7 +189,7 @@ def main():
         valid_keys_list = tools.not_empty_keys(mapped_key_list, sparql_graph=DATASET1_graph)
         logging.info(f"valid key list : {valid_keys_list}")
 
-        with open("data/valid_key_list.json","w",encoding="UTF-8") as f:
+        with open("data/valid_keys_list.json","w",encoding="UTF-8") as f:
             json.dump(valid_keys_list,f)
     
     
@@ -259,7 +259,7 @@ def main():
         with open("data/E1.json") as json_file:
             E1 = json.load(json_file)
     else:
-        E1 = tools.get_entities_prop(sparql_graph=DATASET1_graph)
+        E1 = tools.get_entities_prop(sparql_graph=DATASET1_graph, goldstandard_file_path=goldstandard_file_path)
         with open("data/E1.json","w",encoding="UTF-8") as f:
             json.dump(E1,f)
 
@@ -267,9 +267,9 @@ def main():
         with open("data/E2.json") as json_file:
             E2 = json.load(json_file)
     else:
-        E2 = tools.get_entities_prop(sparql_graph=DATASET2_graph)
+        E2 = tools.get_entities_prop(sparql_graph=DATASET2_graph,goldstandard_file_path=goldstandard_file_path)
         with open("data/E2.json","w",encoding="UTF-8") as f:
-            json.dump(E2,)
+            json.dump(E2,f)
 
 
     if os.path.isfile("data/e1_full_dataset.json"):
@@ -277,49 +277,55 @@ def main():
             e1_full_dataset = json.load(json_file)
     else:
         e1_full_dataset = tools.full_dataset(DATASET1_graph)
-        with open("data/e1_dataset.json","w",encoding="UTF-8") as f:
+        with open("data/e1_full_dataset.json","w",encoding="UTF-8") as f:
             json.dump(e1_full_dataset,f)
 
     if os.path.isfile("data/e2_full_dataset.json"):
         with open("data/e2_full_dataset.json") as json_file:
             e2_full_dataset = json.load(json_file)
     else:
-        e2_full_dataset = tools.full_dataset(DATASET1_graph)
-        with open("data/e1_dataset.json","w",encoding="UTF-8") as f:
+        e2_full_dataset = tools.full_dataset(DATASET2_graph)
+        with open("data/e2_full_dataset.json","w",encoding="UTF-8") as f:
             json.dump(e2_full_dataset,f)
 
-            
+    
+    logging.info(f"Size DBpedia : {len(E1)}, Size Yago : {len(E2)}")        
 
     logging.info(f"Start test loop")
     similarity_results_dict = {}
-    if os.path.isfile("data/similarity_dict_acto.json"):
+    if os.path.isfile("data/similarity_dict_"+CLASSE+".json"):
         with open("data/similarity_dict_"+CLASSE+".json") as json_file:
             similarity_results_dict = json.load(json_file)
     else:
-        for e1 in E1:       
-            logging.info(f"start : {e1}")
-            keys_supported_e1 = []
-            bool_list = list(map(lambda x:not set(x).difference(set(E1[e1])), valid_keys_list))
-            for key, boolean in zip(valid_keys_list,bool_list):
-                if boolean:
-                    keys_supported_e1.append(key)
-            # logging.info(f"keys supported for e1 : {e1} are : {keys_supported_e1}")
-            for key in keys_supported_e1:
-                E2_k = tools.filter_dataset(E2,keys_supported_e1)
-                for e2 in E2_k:
-                    # logging.info(f"Start compute sim, e1 : {e1}, e2 : {e2}, key : {key}")
-                    if not e1 in similarity_results_dict:
-                        # logging.info(f"Add {e1} to dict")
-                        similarity_results_dict[e1] = {}
-                        # logging.info(f"{similarity_results_dict}")
-                        # logging.info(f" test if {e2} in {similarity_results_dict[e1]}")
-                    if not similarity_results_dict[e1].get(e2):
-                        # logging.info(f"Add {e2} to dict")
-                        similarity_results_dict[e1][e2] = {}
-                        # logging.info(f"{similarity_results_dict}")
-                    # logging.info(f"Compute sim {e1} - {e2}")
-                    similarity_results_dict[e1][e2][str(key)] = tools.compute_similarity(e1_full_dataset[e1],e2_full_dataset[e2],key,dict_prop_trees,[DATASET1_graph,DATASET2_graph]) 
-                    # logging.info(similarity_results_dict)
+        for i,e1 in enumerate(E1):       
+            
+            # E2_k = tools.filter_dataset(E2,keys_supported_e1)
+            logging.info(f"start : {e1} with : {len(E2)}. Item {i} / {len(E1)}")
+            c = 0
+            for e2 in E2:
+                usable_keys = []
+                keys_supported_e1 = list(map(lambda x:not set(x).difference(set(E1[e1])), valid_keys_list))
+                keys_supported_e2 = list(map(lambda x:not set(x).difference(set(E2[e2])), valid_keys_list))
+                for key, k1,k2 in zip(valid_keys_list,keys_supported_e1,keys_supported_e2):
+                    if k1 and k2:
+                        usable_keys.append(key)
+                if usable_keys == []:#is no key found we will compare all possibles properties
+                    usable_keys = list(set(E1[e1]).intersection(set(E2[e2]))) 
+                    usable_keys = [[prop] for prop in usable_keys] #convert single prop to 2D list to match key structure
+                if usable_keys == []:#no common properties => we assume their similarity is 0
+                    similarity_results_dict[e1] = {}
+                    similarity_results_dict[e1][e2] = {}
+                    similarity_results_dict[e1][e2]["empty"] = 0
+                else:
+                    for key in usable_keys:
+                        # logging.info(usable_keys)
+                        if not e1 in similarity_results_dict:
+                            similarity_results_dict[e1] = {}
+                        if not similarity_results_dict[e1].get(e2):
+                            similarity_results_dict[e1][e2] = {}
+                        similarity_results_dict[e1][e2][str(key)] = tools.compute_similarity(e1_full_dataset[e1],e2_full_dataset[e2],key,dict_prop_trees,[DATASET1_graph,DATASET2_graph]) 
+                c+=1
+            logging.info(F"{e1} -> {c} == {len(E2)}")
         
         #save huge dict into json
         with open("data/similarity_dict_"+CLASSE+".json","w",encoding="UTF-8") as f:
@@ -327,7 +333,8 @@ def main():
 
     logging.info(f"Start stats loop")    
     mapped_entities = []    
-    for e1 in similarity_results_dict:
+    for i,e1 in enumerate(similarity_results_dict):
+        logging.info(f"start : {e1} . Item {i} / {len(similarity_results_dict)}")
         best_key = ""
         value_best_key = 0
         best_entity = ""
@@ -385,9 +392,9 @@ def main():
         f_measure = 2* (( precision * recall)/(precision + recall)) 
 
     logging.info(f"f-measure : {f_measure} - precision : {precision} - recall : {recall} \n true positives : {tp} - false negatives : {fn} - true negatives : {tn} - false positives : {fp}")
-    for i in range(5):
-        ii = i + 5
 
+    with open("results/"+CLASSE+"_results.txt","w") as f:
+        f.write(f"f-measure : {f_measure} - precision : {precision} - recall : {recall} \n true positives : {tp} - false negatives : {fn} - true negatives : {tn} - false positives : {fp}")
     return precision,recall,f_measure,tp,fn,fp,tn
 
     #generation des arbres

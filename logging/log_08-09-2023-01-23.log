@@ -1,0 +1,69 @@
+INFO 2023-09-08 01:23:42,137 - Start main
+INFO 2023-09-08 01:23:42,137 - Start prop filtering
+INFO 2023-09-08 01:23:42,137 - Start mapped key
+INFO 2023-09-08 01:23:42,138 - Unique key list find : ['haschild', 'wasbornondate', 'ismarriedto-inv', 'directed', 'diedondate', 'ismarriedto', 'influences', 'skos:preflabel', 'created', 'wasbornonyear', 'diedin', 'diedonyear', 'iscitizenof', 'actedin']
+INFO 2023-09-08 01:23:42,396 - Size DBpedia : 4837, Size Yago : 4837
+INFO 2023-09-08 01:23:42,397 - Start test loop
+INFO 2023-09-08 01:23:42,397 - start : chow_yun-fat with : 4837. Item 0 / 4837
+INFO 2023-09-08 01:23:55,965 - chow_yun-fat -> 4837 == 4837
+INFO 2023-09-08 01:23:55,966 - start : michelle_yeoh with : 4837. Item 1 / 4837
+INFO 2023-09-08 01:24:08,167 - michelle_yeoh -> 4837 == 4837
+INFO 2023-09-08 01:24:08,167 - start : zhang_ziyi with : 4837. Item 2 / 4837
+INFO 2023-09-08 01:24:19,805 - zhang_ziyi -> 4837 == 4837
+INFO 2023-09-08 01:24:19,805 - start : chang_chen with : 4837. Item 3 / 4837
+INFO 2023-09-08 01:24:31,905 - chang_chen -> 4837 == 4837
+INFO 2023-09-08 01:24:31,906 - start : denise_coffey with : 4837. Item 4 / 4837
+INFO 2023-09-08 01:24:43,351 - denise_coffey -> 4837 == 4837
+INFO 2023-09-08 01:24:43,351 - start : bruce_lee with : 4837. Item 5 / 4837
+INFO 2023-09-08 01:24:58,058 - bruce_lee -> 4837 == 4837
+INFO 2023-09-08 01:24:58,058 - start : jun_tazaki with : 4837. Item 6 / 4837
+INFO 2023-09-08 01:24:58,614 - jun_tazaki -> 4837 == 4837
+INFO 2023-09-08 01:24:58,614 - start : akira_kubo with : 4837. Item 7 / 4837
+INFO 2023-09-08 01:25:10,739 - akira_kubo -> 4837 == 4837
+INFO 2023-09-08 01:25:10,739 - start : satomi_kobayashi with : 4837. Item 8 / 4837
+INFO 2023-09-08 01:25:23,110 - satomi_kobayashi -> 4837 == 4837
+INFO 2023-09-08 01:25:23,110 - start : akiji_kobayashi with : 4837. Item 9 / 4837
+INFO 2023-09-08 01:25:36,470 - akiji_kobayashi -> 4837 == 4837
+INFO 2023-09-08 01:25:36,471 - start : kenpachiro_satsuma with : 4837. Item 10 / 4837
+INFO 2023-09-08 01:25:49,658 - kenpachiro_satsuma -> 4837 == 4837
+INFO 2023-09-08 01:25:49,658 - start : anna_nakagawa with : 4837. Item 11 / 4837
+INFO 2023-09-08 01:26:02,295 - anna_nakagawa -> 4837 == 4837
+INFO 2023-09-08 01:26:02,295 - start : yoshiko_tanaka with : 4837. Item 12 / 4837
+INFO 2023-09-08 01:26:14,351 - yoshiko_tanaka -> 4837 == 4837
+INFO 2023-09-08 01:26:14,351 - start : masanobu_takashima with : 4837. Item 13 / 4837
+INFO 2023-09-08 01:26:26,010 - masanobu_takashima -> 4837 == 4837
+INFO 2023-09-08 01:26:26,011 - start : yasuko_sawaguchi with : 4837. Item 14 / 4837
+INFO 2023-09-08 01:26:33,853 - yasuko_sawaguchi -> 4837 == 4837
+INFO 2023-09-08 01:26:33,853 - start : diane_fletcher with : 4837. Item 15 / 4837
+INFO 2023-09-08 01:26:45,605 - diane_fletcher -> 4837 == 4837
+INFO 2023-09-08 01:26:45,605 - start : jet_li with : 4837. Item 16 / 4837
+INFO 2023-09-08 01:26:58,644 - jet_li -> 4837 == 4837
+INFO 2023-09-08 01:26:58,645 - start : doreen_mantle with : 4837. Item 17 / 4837
+INFO 2023-09-08 01:27:06,387 - doreen_mantle -> 4837 == 4837
+INFO 2023-09-08 01:27:06,387 - start : kelda_holmes with : 4837. Item 18 / 4837
+INFO 2023-09-08 01:27:13,950 - kelda_holmes -> 4837 == 4837
+INFO 2023-09-08 01:27:13,950 - start : yuriko_ishida with : 4837. Item 19 / 4837
+INFO 2023-09-08 01:27:26,026 - yuriko_ishida -> 4837 == 4837
+INFO 2023-09-08 01:27:26,027 - start : mitsuko_mori with : 4837. Item 20 / 4837
+INFO 2023-09-08 01:27:33,676 - mitsuko_mori -> 4837 == 4837
+INFO 2023-09-08 01:27:33,676 - start : hisaya_morishige with : 4837. Item 21 / 4837
+INFO 2023-09-08 01:27:46,748 - hisaya_morishige -> 4837 == 4837
+INFO 2023-09-08 01:27:46,749 - start : joan_chen with : 4837. Item 22 / 4837
+INFO 2023-09-08 01:27:59,300 - joan_chen -> 4837 == 4837
+INFO 2023-09-08 01:27:59,300 - start : charlton_heston with : 4837. Item 23 / 4837
+INFO 2023-09-08 01:28:14,972 - charlton_heston -> 4837 == 4837
+INFO 2023-09-08 01:28:14,972 - start : karen_meagher with : 4837. Item 24 / 4837
+INFO 2023-09-08 01:28:25,789 - karen_meagher -> 4837 == 4837
+INFO 2023-09-08 01:28:25,790 - start : ilona_staller with : 4837. Item 25 / 4837
+INFO 2023-09-08 01:28:38,672 - ilona_staller -> 4837 == 4837
+INFO 2023-09-08 01:28:38,672 - start : brenda_vaccaro with : 4837. Item 26 / 4837
+INFO 2023-09-08 01:28:51,055 - brenda_vaccaro -> 4837 == 4837
+INFO 2023-09-08 01:28:51,055 - start : helen_atkinson-wood with : 4837. Item 27 / 4837
+INFO 2023-09-08 01:29:02,450 - helen_atkinson-wood -> 4837 == 4837
+INFO 2023-09-08 01:29:02,450 - start : so_yamamura with : 4837. Item 28 / 4837
+INFO 2023-09-08 01:29:15,159 - so_yamamura -> 4837 == 4837
+INFO 2023-09-08 01:29:15,159 - start : asia_carrera with : 4837. Item 29 / 4837
+INFO 2023-09-08 01:29:26,799 - asia_carrera -> 4837 == 4837
+INFO 2023-09-08 01:29:26,799 - start : gary_bakewell with : 4837. Item 30 / 4837
+INFO 2023-09-08 01:29:39,064 - gary_bakewell -> 4837 == 4837
+INFO 2023-09-08 01:29:39,064 - start : sally_knyvette with : 4837. Item 31 / 4837

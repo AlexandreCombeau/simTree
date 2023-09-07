@@ -1,0 +1,9 @@
+INFO 2023-09-08 01:22:23,279 - Start main
+INFO 2023-09-08 01:22:23,279 - Start prop filtering
+INFO 2023-09-08 01:22:23,279 - Start mapped key
+INFO 2023-09-08 01:22:23,280 - Unique key list find : ['haschild', 'wasbornondate', 'ismarriedto-inv', 'directed', 'diedondate', 'ismarriedto', 'influences', 'skos:preflabel', 'created', 'wasbornonyear', 'diedin', 'diedonyear', 'iscitizenof', 'actedin']
+INFO 2023-09-08 01:22:23,573 - Size DBpedia : 4837, Size Yago : 4837
+INFO 2023-09-08 01:22:23,573 - Start test loop
+INFO 2023-09-08 01:22:23,573 - start : chow_yun-fat with : 4837. Item 0 / 4837
+INFO 2023-09-08 01:22:37,341 - start : michelle_yeoh with : 4837. Item 1 / 4837
+INFO 2023-09-08 01:22:49,854 - start : zhang_ziyi with : 4837. Item 2 / 4837

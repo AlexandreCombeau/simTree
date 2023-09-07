@@ -290,8 +290,7 @@ class SimGen():
         #compute score for each tree
         self.init_population()
         for _ in range(self.nb_generation):
-            if max(self.population_similarity) > self.threshold:
-                break
+
             self.fitness_over_population()
             self.tournament_selection()
             self.crossover()
